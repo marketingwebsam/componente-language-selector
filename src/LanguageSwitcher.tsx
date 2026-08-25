@@ -14,6 +14,7 @@ import {
   GOOGLE_TRANSLATE_DEFAULTS,
   readGoogleTranslateLanguage,
   writeGoogleTranslateLanguage,
+  clearGoogleTranslateLanguage,
 } from './googleTranslate'
 
 export interface LanguageOption {
@@ -113,25 +114,41 @@ export default function LanguageSwitcher({
   }, [languages.length])
 
   const select = useCallback((language: LanguageOption) => {
-    writeGoogleTranslateLanguage(language.code)
-    setCurrentCode(language.code)
+    const previousCode = currentCode
     setOpen(false)
+
+    const rollback = () => {
+      if (previousCode === defaultLanguage) clearGoogleTranslateLanguage()
+      else writeGoogleTranslateLanguage(previousCode)
+      setCurrentCode(previousCode)
+    }
 
     const applySelection = () => {
       const applied = applyGoogleTranslateLanguage(language.code, targetId)
-      if (applied) onLanguageChange?.(language.code)
+      if (applied) {
+        writeGoogleTranslateLanguage(language.code)
+        setCurrentCode(language.code)
+        onLanguageChange?.(language.code)
+      }
       return applied
     }
 
-    if (!applySelection() && loadGoogleTranslate) {
+    if (applySelection()) return
+
+    if (loadGoogleTranslate) {
       void ensureGoogleTranslate({
         targetId,
         pageLanguage,
         includedLanguages,
         scriptUrl: googleTranslateScriptUrl,
-      }).then(applySelection)
+      }).then((ready) => {
+        if (!ready || !applySelection()) rollback()
+      })
+      return
     }
-  }, [googleTranslateScriptUrl, includedLanguages, loadGoogleTranslate, onLanguageChange, pageLanguage, targetId])
+
+    rollback()
+  }, [currentCode, defaultLanguage, googleTranslateScriptUrl, includedLanguages, loadGoogleTranslate, onLanguageChange, pageLanguage, targetId])
 
   const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     if (event.key === 'Escape') {

@@ -111,6 +111,30 @@ describe('Google Translate adapter', () => {
     )
   })
 
+  it('recovers when a host callback left an empty combo pending', async () => {
+    const target = document.createElement('div')
+    target.id = 'language-target'
+    target.innerHTML = '<select class="goog-te-combo"></select>'
+    target.setAttribute('data-component-language-switcher-google-translate-initialization', 'pending')
+    target.setAttribute('data-component-language-switcher-google-translate-initialization-at', String(Date.now() - 2000))
+    document.body.appendChild(target)
+
+    const TranslateElement = vi.fn((_options: unknown, targetId: string) => {
+      const currentTarget = document.getElementById(targetId)
+      if (currentTarget) {
+        currentTarget.innerHTML = '<select class="goog-te-combo"><option value="pt">Português</option><option value="en">English</option></select>'
+      }
+    }) as unknown as new (...args: unknown[]) => unknown
+    ;(window as Window & { google?: unknown }).google = {
+      translate: { TranslateElement },
+    }
+
+    expect(await ensureGoogleTranslate({ targetId: 'language-target', timeoutMs: 100 })).toBe(true)
+    expect(TranslateElement).toHaveBeenCalledTimes(1)
+    expect(target.querySelector<HTMLSelectElement>('.goog-te-combo')?.options.length).toBe(2)
+    expect(target.hasAttribute('data-component-language-switcher-google-translate-initialization')).toBe(false)
+  })
+
   it('creates the plugin-compatible loader before waiting for Google', async () => {
     document.body.innerHTML = '<div id="language-target"></div>'
 
