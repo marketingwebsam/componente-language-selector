@@ -34,7 +34,7 @@ O pacote foi configurado para React `>=18` e é compilado com Vite como bibliote
 
 ## Google Translate automático
 
-Por padrão, `loadGoogleTranslate` é `true`. Nesse modo, o componente cria uma única tag do script do Google Translate, inicializa um alvo invisível próprio e reutiliza o script caso o host já tenha uma tag equivalente. O callback é definido antes de o script ser anexado, como no plugin GTranslate 3.1.1, para que o runtime possa chamar a inicialização sem depender de uma corrida de carregamento:
+Por padrão, `loadGoogleTranslate` é `true`. Nesse modo, o componente cria uma única tag do script do Google Translate, inicializa um alvo invisível próprio e reutiliza o script caso o host já tenha uma tag equivalente. O callback é definido antes de o script ser anexado e a tag é inserida sem `async`, como no plugin GTranslate 3.1.1, para preservar a ordem do bootstrap:
 
 ```tsx
 <LanguageSwitcher
@@ -101,7 +101,7 @@ npm run build
 bash tests/smoke.sh
 ```
 
-O pacote foi validado com lint ESLint, seis testes unitários do adaptador, dois testes de interação do componente, typecheck/declaration build e build Vite. O smoke test também bloqueia referências de produção a navegação por locale, filtros de posts e query strings, além de verificar a espera pelo combo e a sequência dupla de `change`, incluindo a API do host disponibilizada tardiamente.
+O pacote foi validado com lint ESLint, sete testes unitários do adaptador, dois testes de interação do componente, typecheck/declaration build e build Vite. O smoke test também bloqueia referências de produção a navegação por locale, filtros de posts e query strings, além de verificar a espera pelo combo, a sequência dupla de `change`, a tag singleton sem `async` e a API do host disponibilizada tardiamente.
 
 ## Integração no Apogeo
 

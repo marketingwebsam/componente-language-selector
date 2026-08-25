@@ -86,6 +86,19 @@ describe('Google Translate adapter', () => {
     expect(change).toHaveBeenCalledTimes(2)
   })
 
+  it('creates the plugin-compatible loader before waiting for Google', async () => {
+    document.body.innerHTML = '<div id="language-target"></div>'
+
+    const pending = ensureGoogleTranslate({ targetId: 'language-target', timeoutMs: 20 })
+    const script = document.querySelector<HTMLScriptElement>('script[data-component-language-switcher-google-translate]')
+
+    expect(script).not.toBeNull()
+    expect(script?.async).toBe(false)
+    expect(script?.src).toContain('cb=componentLanguageSwitcherGoogleTranslateInit')
+    expect((window as Window & { gt_translate_script?: HTMLScriptElement }).gt_translate_script).toBe(script)
+    expect(await pending).toBe(false)
+  })
+
   it('retries initialization when a host script exposes Google after the first poll', async () => {
     document.body.innerHTML = '<div id="language-target"></div>'
     const hostScript = document.createElement('script')
