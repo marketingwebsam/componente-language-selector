@@ -24,6 +24,7 @@ interface GoogleTranslateWindow extends Window {
     }
   }
   componentLanguageSwitcherGoogleTranslateInit?: () => void
+  gt_translate_script?: HTMLScriptElement
 }
 
 const DEFAULT_SCRIPT_URL = 'https://translate.google.com/translate_a/element.js'
@@ -31,6 +32,7 @@ const DEFAULT_PAGE_LANGUAGE = 'pt'
 const DEFAULT_INCLUDED_LANGUAGES = 'en,es,it,pt,pt-PT,zh-CN,ja,fr'
 const CALLBACK_NAME = 'componentLanguageSwitcherGoogleTranslateInit'
 const SCRIPT_ATTRIBUTE = 'data-component-language-switcher-google-translate'
+const INITIALIZATION_ATTRIBUTE = 'data-component-language-switcher-google-translate-initialization'
 const COOKIE_NAME = 'googtrans'
 
 function getWindow(): GoogleTranslateWindow | null {
@@ -94,10 +96,13 @@ export function findGoogleTranslateCombo(targetId: string): HTMLSelectElement | 
  */
 export function applyGoogleTranslateLanguage(language: string, targetId: string): boolean {
   const combo = findGoogleTranslateCombo(targetId)
-  if (!combo) return false
+  if (!combo || combo.options.length === 0) return false
 
   try {
     combo.value = language
+    // GTranslate's widget fires the native event twice for compatibility
+    // across browsers and versions of the Website Translator runtime.
+    combo.dispatchEvent(new Event('change', { bubbles: true }))
     combo.dispatchEvent(new Event('change', { bubbles: true }))
     return true
   } catch {
@@ -109,8 +114,12 @@ function initializeGoogleTranslate(options: Required<Pick<GoogleTranslateOptions
   const constructor = getTranslateConstructor()
   const target = getTarget(options.targetId)
   if (!constructor || !target) return false
-  if (target.querySelector('.goog-te-combo')) return true
 
+  const combo = target.querySelector<HTMLSelectElement>('.goog-te-combo')
+  if (combo && combo.options.length > 0) return true
+  if (target.getAttribute(INITIALIZATION_ATTRIBUTE) === 'pending') return false
+
+  target.setAttribute(INITIALIZATION_ATTRIBUTE, 'pending')
   try {
     new constructor(
       {
@@ -120,8 +129,10 @@ function initializeGoogleTranslate(options: Required<Pick<GoogleTranslateOptions
       },
       options.targetId,
     )
-    return true
+    const initializedCombo = target.querySelector<HTMLSelectElement>('.goog-te-combo')
+    return Boolean(initializedCombo && initializedCombo.options.length > 0)
   } catch {
+    target.removeAttribute(INITIALIZATION_ATTRIBUTE)
     return false
   }
 }
@@ -129,17 +140,25 @@ function initializeGoogleTranslate(options: Required<Pick<GoogleTranslateOptions
 function getOrCreateScript(scriptUrl: string): HTMLScriptElement | null {
   if (typeof document === 'undefined') return null
 
+  const currentWindow = getWindow()
+  const trackedScript = currentWindow?.gt_translate_script
+  if (trackedScript) return trackedScript
+
   const existing = document.querySelector<HTMLScriptElement>(
     `script[${SCRIPT_ATTRIBUTE}], script[src*="translate.google.com/translate_a/element.js"]`,
   )
-  if (existing) return existing
+  if (existing) {
+    if (currentWindow) currentWindow.gt_translate_script = existing
+    return existing
+  }
 
   try {
     const script = document.createElement('script')
     script.async = true
     script.src = `${scriptUrl}${scriptUrl.includes('?') ? '&' : '?'}cb=${CALLBACK_NAME}`
     script.setAttribute(SCRIPT_ATTRIBUTE, 'true')
-    document.head.appendChild(script)
+    ;(document.body || document.head).appendChild(script)
+    if (currentWindow) currentWindow.gt_translate_script = script
     return script
   } catch {
     return null
@@ -163,7 +182,8 @@ export function ensureGoogleTranslate(options: GoogleTranslateOptions): Promise<
     return Promise.resolve(false)
   }
 
-  if (initializeGoogleTranslate(normalized)) return Promise.resolve(true)
+  const existingCombo = findGoogleTranslateCombo(normalized.targetId)
+  if (existingCombo && existingCombo.options.length > 0) return Promise.resolve(true)
 
   const currentWindow = getWindow()
   const previousCallback = currentWindow?.[CALLBACK_NAME]
@@ -173,14 +193,21 @@ export function ensureGoogleTranslate(options: GoogleTranslateOptions): Promise<
       initializeGoogleTranslate(normalized)
     }
   }
+
   getOrCreateScript(normalized.scriptUrl)
+  initializeGoogleTranslate(normalized)
 
   return new Promise((resolve) => {
     const startedAt = Date.now()
     const poll = () => {
-      const initialized = initializeGoogleTranslate(normalized)
-      if (initialized || Date.now() - startedAt >= normalized.timeoutMs) {
-        resolve(initialized)
+      const combo = findGoogleTranslateCombo(normalized.targetId)
+      if (combo && combo.options.length > 0) {
+        resolve(true)
+        return
+      }
+      if (Date.now() - startedAt >= normalized.timeoutMs) {
+        getTarget(normalized.targetId)?.removeAttribute(INITIALIZATION_ATTRIBUTE)
+        resolve(false)
         return
       }
       window.setTimeout(poll, 50)
