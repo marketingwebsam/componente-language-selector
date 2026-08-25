@@ -1,0 +1,153 @@
+.ls-root {
+  position: relative;
+  z-index: 200;
+}
+
+.ls-trigger {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px 5px 8px;
+  border: 1px solid rgba(210, 179, 102, 0.25);
+  border-radius: 8px;
+  background: rgba(22, 22, 22, 0.75);
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.25s, background 0.25s, color 0.25s;
+}
+
+.ls-trigger:hover,
+.ls-trigger:focus-visible {
+  border-color: rgba(210, 179, 102, 0.65);
+  background: rgba(30, 28, 24, 0.92);
+  color: var(--language-switcher-accent, #d2b366);
+}
+
+.ls-trigger:focus-visible,
+.ls-option:focus-visible {
+  outline: 2px solid var(--language-switcher-accent, #d2b366);
+  outline-offset: 2px;
+}
+
+.ls-label {
+  display: inline;
+  white-space: nowrap;
+}
+
+.ls-chevron {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.45);
+  transition: transform 0.25s, color 0.25s;
+}
+
+.ls-chevron--open {
+  transform: rotate(180deg);
+  color: var(--language-switcher-accent, #d2b366);
+}
+
+.ls-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 178px;
+  padding: 6px;
+  border: 1px solid rgba(210, 179, 102, 0.2);
+  border-radius: 10px;
+  background: rgba(18, 17, 16, 0.98);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(210, 179, 102, 0.06);
+  backdrop-filter: blur(16px);
+  animation: language-switcher-drop-in 0.18s ease;
+}
+
+@keyframes language-switcher-drop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ls-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: left;
+  transition: background 0.18s, color 0.18s;
+}
+
+.ls-option:hover,
+.ls-option--active {
+  background: rgba(210, 179, 102, 0.1);
+  color: var(--language-switcher-accent, #d2b366);
+}
+
+.ls-option-label {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.ls-check {
+  flex-shrink: 0;
+}
+
+.ls-google-translate-target {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Google Translate must remain invisible; the custom control is the only UI. */
+.ls-google-translate-target .goog-te-gadget,
+.ls-google-translate-target .goog-te-combo,
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+#goog-gt-tt,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+}
+
+body {
+  top: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .ls-trigger {
+    max-width: 145px;
+    padding-inline: 10px;
+  }
+
+  .ls-label {
+    max-width: 105px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ls-trigger,
+  .ls-chevron,
+  .ls-option,
+  .ls-dropdown {
+    animation: none;
+    transition: none;
+  }
+}

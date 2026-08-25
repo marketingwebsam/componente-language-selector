@@ -1,2 +1,116 @@
-# componente-language-selector
-Componente Language Selector com Google Translate
+# Language Switcher com Google Translate
+
+Componente React reutilizável extraído do [Apogeo Nobre](https://github.com/marketingwebsam/apogeonobre). Ele funciona como uma camada de controle para o Google Translate Website Translator: o usuário escolhe um idioma, o componente grava o cookie `googtrans` e dispara `change` no select nativo `.goog-te-combo` criado pelo Google.
+
+> **Contrato anti-filtro:** este componente não conhece posts, categorias, rotas, query strings, slugs, `react-router`, `URLSearchParams` ou qualquer estado de conteúdo. O código de idioma é encaminhado exclusivamente ao Google Translate; a página permanece na mesma URL e a lista de conteúdo não é filtrada.
+
+A integração usa o widget de tradução de páginas do Google, que traduz o conteúdo da página para outros idiomas [1]. O projeto mantém o endpoint e o formato de inicialização isolados no adaptador `src/googleTranslate.ts`, sem misturar tradução com navegação da aplicação.
+
+## Conteúdo
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `src/LanguageSwitcher.tsx` | Dropdown React acessível, flags, seleção e integração com o adaptador. |
+| `src/googleTranslate.ts` | Cookie `googtrans`, carregamento idempotente do script e comunicação com `.goog-te-combo`. |
+| `src/styles.css` | Estilos isolados do seletor e ocultação apenas da UI auxiliar do Google Translate. |
+| `src/assets/flags/*.svg` | Flags autocontidas extraídas do Apogeo. |
+| `src/googleTranslate.test.ts` | Testes do contrato do adaptador e do isolamento contra outros selects. |
+| `tests/smoke.sh` | Lint, testes, build e bloqueio estático contra rotas/posts/filtros. |
+
+## Instalação
+
+Instale as dependências do pacote no projeto consumidor e importe o componente e os estilos:
+
+```tsx
+import { LanguageSwitcher } from '@marketingwebsam/language-switcher'
+import '@marketingwebsam/language-switcher/styles.css'
+
+export function Header() {
+  return <LanguageSwitcher />
+}
+```
+
+O pacote foi configurado para React `>=18` e é compilado com Vite como biblioteca ES. Para usar o código diretamente sem publicar no npm, copie `src/` e mantenha os imports relativos dos SVGs.
+
+## Google Translate automático
+
+Por padrão, `loadGoogleTranslate` é `true`. Nesse modo, o componente cria uma única tag do script do Google Translate, inicializa um alvo invisível próprio e reutiliza o script caso o host já tenha uma tag equivalente:
+
+```tsx
+<LanguageSwitcher
+  pageLanguage="pt"
+  includedLanguages="en,es,it,pt,pt-PT,zh-CN,ja,fr"
+/>
+```
+
+A inicialização é feita com `autoDisplay: false`, portanto a UI visível é somente o seletor customizado. O componente não usa o elemento global `#google_translate_element` do host: cada instância possui um alvo isolado e um ID próprio.
+
+Se o site já inicializa o Google Translate no `index.html`, o host pode manter essa responsabilidade e fornecer um alvo estável:
+
+```tsx
+<LanguageSwitcher
+  loadGoogleTranslate={false}
+  translateTargetId="apogeo-google-translate"
+/>
+```
+
+O callback do host deve inicializar o Google Translate usando exatamente `apogeo-google-translate`. Nesse modo, o site deve disponibilizar um `.goog-te-combo` dentro desse alvo. O componente não faz reload da página quando o select ainda não está disponível; ele grava a preferência sem alterar a rota e tenta aplicar a seleção novamente quando o carregamento automático está habilitado.
+
+## API
+
+| Prop | Padrão | Uso |
+|---|---|---|
+| `pageLanguage` | `pt` | Idioma original informado ao Google Translate. |
+| `includedLanguages` | `en,es,it,pt,pt-PT,zh-CN,ja,fr` | Códigos aceitos pelo Google Translate. |
+| `loadGoogleTranslate` | `true` | Carrega o script do Google ou permite que o host o gerencie. |
+| `googleTranslateScriptUrl` | URL oficial | Permite uma URL de script controlada pelo host. |
+| `translateTargetId` | ID gerado pelo React | ID estável do alvo Google quando o host gerencia a inicialização. |
+| `defaultLanguage` | `pt` | Label inicial antes da leitura do cookie. |
+| `className` | vazio | Classe adicional para o layout do host. |
+| `onLanguageChange` | não definido | Callback após o `change` ser disparado no select Google. |
+| `languages` | 8 idiomas | Lista de `{ code, label, flag }`; os códigos são enviados somente ao Google Translate. |
+
+O adaptador também exporta `readGoogleTranslateLanguage`, `writeGoogleTranslateLanguage`, `applyGoogleTranslateLanguage`, `findGoogleTranslateCombo` e `ensureGoogleTranslate` para integrações avançadas.
+
+## Por que não age como filtro de posts
+
+A versão estabilizada impõe quatro separações importantes:
+
+| Risco | Proteção implementada |
+|---|---|
+| Um seletor genérico ser confundido com filtro de idioma do conteúdo | A busca pelo select é escopada ao alvo gerado pela própria instância e ao seletor `.goog-te-combo`. |
+| O idioma ser transformado em rota ou query string | Não há `useNavigate`, `navigate`, `URLSearchParams`, `window.location`, links de idioma ou reload. |
+| A aplicação receber estado de posts | Não há props, imports ou callbacks de posts, categorias, slugs ou filtros de conteúdo. |
+| Um script auxiliar duplicar a interface | O carregamento do script é idempotente e o alvo Google fica invisível; o usuário interage somente com a UI customizada. |
+
+O smoke test procura regressões dessas categorias no código de produção e os testes unitários confirmam que um `.goog-te-combo` fora do alvo não é alterado.
+
+## Acessibilidade e UX
+
+O trigger usa `aria-haspopup="listbox"`, `aria-expanded` e `aria-controls`. As opções usam `role="option"` e `aria-selected`; o menu responde a `Enter`, espaço, setas, `Home`, `End` e `Escape`. As flags são decorativas porque o nome do idioma permanece textual. O foco visível e o modo `prefers-reduced-motion` são preservados, e o dropdown fecha quando o usuário clica fora.
+
+A direção visual foi mantida próxima ao Apogeo: fundo escuro translúcido, acento dourado, dropdown alinhado à direita, label antes da bandeira e adaptação para telas estreitas. As classes são específicas (`ls-*`) e os principais valores são tokens CSS para reduzir vazamento em sites consumidores.
+
+## Desenvolvimento e validação
+
+```bash
+npm install
+npm run lint
+npm test
+npm run build
+bash tests/smoke.sh
+```
+
+O pacote foi validado com lint ESLint, quatro testes unitários do adaptador, typecheck/declaration build e build Vite. O smoke test também bloqueia referências de produção a navegação por locale, filtros de posts e query strings.
+
+## Integração no Apogeo
+
+O Apogeo já possui o script do Google Translate no `index.html` e renderiza o componente em desktop e mobile dentro de `Header.tsx`. Para migrar sem duplicar o script, a integração deve usar `loadGoogleTranslate={false}` junto com um `translateTargetId` estável, e o callback do host deve apontar para esse mesmo ID. A alternativa é remover a inicialização duplicada do host e deixar o componente controlar automaticamente o alvo do Google Translate.
+
+A extração não modifica o Apogeo, portanto o site atual permanece intacto. O repositório de destino contém a versão portável e estabilizada, pronta para uma integração explícita em cada projeto consumidor.
+
+## Referências
+
+[1]: https://developers.google.com/search/blog/2020/05/google-translates-website-translator "Google Search Central — Google Translate's Website Translator"
+[2]: https://react.dev/reference/react/useRef "React — useRef"
+[3]: https://testing-library.com/docs/queries/about#priority "Testing Library — About Queries"
