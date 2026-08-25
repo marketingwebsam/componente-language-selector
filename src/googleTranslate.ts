@@ -35,6 +35,8 @@ const DEFAULT_INCLUDED_LANGUAGES = ''
 const CALLBACK_NAME = 'componentLanguageSwitcherGoogleTranslateInit'
 const SCRIPT_ATTRIBUTE = 'data-component-language-switcher-google-translate'
 const INITIALIZATION_ATTRIBUTE = 'data-component-language-switcher-google-translate-initialization'
+const INITIALIZATION_STARTED_ATTRIBUTE = `${INITIALIZATION_ATTRIBUTE}-at`
+const INITIALIZATION_STALE_MS = 1000
 const COOKIE_NAME = 'googtrans'
 
 function getWindow(): GoogleTranslateWindow | null {
@@ -50,6 +52,11 @@ function getTranslateConstructor(): TranslateElementConstructor | null {
 function getTarget(targetId: string): HTMLElement | null {
   if (typeof document === 'undefined') return null
   return document.getElementById(targetId)
+}
+
+function clearInitializationMarker(target: HTMLElement): void {
+  target.removeAttribute(INITIALIZATION_ATTRIBUTE)
+  target.removeAttribute(INITIALIZATION_STARTED_ATTRIBUTE)
 }
 
 /**
@@ -122,10 +129,22 @@ function initializeGoogleTranslate(options: {
   if (!constructor || !target) return false
 
   const combo = target.querySelector<HTMLSelectElement>('.goog-te-combo')
-  if (combo && combo.options.length > 0) return true
-  if (target.getAttribute(INITIALIZATION_ATTRIBUTE) === 'pending') return false
+  if (combo && combo.options.length > 0) {
+    clearInitializationMarker(target)
+    return true
+  }
+
+  if (target.getAttribute(INITIALIZATION_ATTRIBUTE) === 'pending') {
+    const startedAt = Number(target.getAttribute(INITIALIZATION_STARTED_ATTRIBUTE))
+    const isRecent = Number.isFinite(startedAt) && Date.now() - startedAt < INITIALIZATION_STALE_MS
+    if (isRecent) return false
+    // A host callback may have created an empty widget before this adapter was
+    // mounted. Let the adapter recover instead of remaining stuck forever.
+    clearInitializationMarker(target)
+  }
 
   target.setAttribute(INITIALIZATION_ATTRIBUTE, 'pending')
+  target.setAttribute(INITIALIZATION_STARTED_ATTRIBUTE, String(Date.now()))
   try {
     const translateOptions: {
       pageLanguage: string
@@ -139,9 +158,11 @@ function initializeGoogleTranslate(options: {
 
     new constructor(translateOptions, options.targetId)
     const initializedCombo = target.querySelector<HTMLSelectElement>('.goog-te-combo')
-    return Boolean(initializedCombo && initializedCombo.options.length > 0)
+    const initialized = Boolean(initializedCombo && initializedCombo.options.length > 0)
+    if (initialized) clearInitializationMarker(target)
+    return initialized
   } catch {
-    target.removeAttribute(INITIALIZATION_ATTRIBUTE)
+    clearInitializationMarker(target)
     return false
   }
 }
@@ -217,7 +238,8 @@ export function ensureGoogleTranslate(options: GoogleTranslateOptions): Promise<
         return
       }
       if (Date.now() - startedAt >= normalized.timeoutMs) {
-        getTarget(normalized.targetId)?.removeAttribute(INITIALIZATION_ATTRIBUTE)
+        const target = getTarget(normalized.targetId)
+        if (target) clearInitializationMarker(target)
         resolve(false)
         return
       }
