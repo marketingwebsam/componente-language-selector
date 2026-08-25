@@ -21,7 +21,7 @@ afterEach(() => {
 describe('Google Translate adapter', () => {
   it('uses only the googtrans cookie for the selected language', () => {
     writeGoogleTranslateLanguage('es')
-    expect(document.cookie).toContain('googtrans=%2Fauto%2Fes')
+    expect(document.cookie).toContain('googtrans=%2Fpt%2Fes')
     expect(readGoogleTranslateLanguage()).toBe('es')
   })
 
