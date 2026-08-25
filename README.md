@@ -43,7 +43,7 @@ Por padrão, `loadGoogleTranslate` é `true`. Nesse modo, o componente cria uma 
 />
 ```
 
-A inicialização é feita com `autoDisplay: false`, portanto a UI visível é somente o seletor customizado. O componente não usa o elemento global `#google_translate_element` do host: cada instância possui um alvo isolado e um ID próprio. Depois de instanciar `TranslateElement`, o adaptador espera até que o Google crie um `.goog-te-combo` populado. Só então aplica o idioma, atribui o valor ao select nativo e dispara dois eventos `change`, sequência usada pelo plugin para compatibilidade com o Website Translator em diferentes navegadores e versões.
+A inicialização é feita com `autoDisplay: false`, portanto a UI visível é somente o seletor customizado. O componente não usa o elemento global `#google_translate_element` do host: cada instância possui um alvo isolado e um ID próprio. Depois de instanciar `TranslateElement`, o adaptador espera até que o Google crie um `.goog-te-combo` populado. Se o script do host terminar de expor `window.google` depois da primeira tentativa, o polling reentra no inicializador; um marcador pendente impede construtores duplicados. Só então aplica o idioma, atribui o valor ao select nativo e dispara dois eventos `change`, sequência usada pelo plugin para compatibilidade com o Website Translator em diferentes navegadores e versões.
 
 Se o site já inicializa o Google Translate no `index.html`, o host pode manter essa responsabilidade e fornecer um alvo estável:
 
@@ -101,7 +101,7 @@ npm run build
 bash tests/smoke.sh
 ```
 
-O pacote foi validado com lint ESLint, cinco testes unitários do adaptador, dois testes de interação do componente, typecheck/declaration build e build Vite. O smoke test também bloqueia referências de produção a navegação por locale, filtros de posts e query strings, além de verificar a espera pelo combo e a sequência dupla de `change`.
+O pacote foi validado com lint ESLint, seis testes unitários do adaptador, dois testes de interação do componente, typecheck/declaration build e build Vite. O smoke test também bloqueia referências de produção a navegação por locale, filtros de posts e query strings, além de verificar a espera pelo combo e a sequência dupla de `change`, incluindo a API do host disponibilizada tardiamente.
 
 ## Integração no Apogeo
 

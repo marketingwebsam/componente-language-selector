@@ -86,6 +86,28 @@ describe('Google Translate adapter', () => {
     expect(change).toHaveBeenCalledTimes(2)
   })
 
+  it('retries initialization when a host script exposes Google after the first poll', async () => {
+    document.body.innerHTML = '<div id="language-target"></div>'
+    const hostScript = document.createElement('script')
+    hostScript.src = 'https://translate.google.com/translate_a/element.js?cb=hostCallback'
+    document.head.appendChild(hostScript)
+
+    const TranslateElement = vi.fn(function (this: unknown, _options: unknown, targetId: string) {
+      const target = document.getElementById(targetId)
+      target?.insertAdjacentHTML('beforeend', '<select class="goog-te-combo"><option value="pt">Português</option><option value="en">English</option></select>')
+    }) as unknown as new (...args: unknown[]) => unknown
+
+    const pending = ensureGoogleTranslate({ targetId: 'language-target', timeoutMs: 500 })
+    await new Promise((resolve) => window.setTimeout(resolve, 20))
+    ;(window as Window & { google?: unknown }).google = {
+      translate: { TranslateElement },
+    }
+
+    expect(await pending).toBe(true)
+    expect(TranslateElement).toHaveBeenCalledTimes(1)
+    expect(findGoogleTranslateCombo('language-target')).not.toBeNull()
+  })
+
   it('reuses a host Google Translate script and initializes the scoped target', async () => {
     document.body.innerHTML = '<div id="language-target"></div>'
     const hostScript = document.createElement('script')
