@@ -85,7 +85,7 @@ export function writeGoogleTranslateLanguage(language: string): void {
   if (typeof document === 'undefined') return
 
   try {
-    const value = `/auto/${language}`
+    const value = `/${DEFAULT_PAGE_LANGUAGE}/${language}`
     const expires = 'expires=Thu, 31 Dec 2099 23:59:59 UTC;path=/;SameSite=Lax'
     document.cookie = `${COOKIE_NAME}=${encodeURIComponent(value)};${expires}`
   } catch {

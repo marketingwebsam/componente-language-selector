@@ -1,6 +1,6 @@
 # Language Switcher com Google Translate
 
-Componente React reutilizável extraído do [Apogeo Nobre](https://github.com/marketingwebsam/apogeonobre). Ele funciona como uma camada de controle para o Google Translate Website Translator: o usuário escolhe um idioma, o componente grava o cookie `googtrans` e dispara `change` no select nativo `.goog-te-combo` criado pelo Google.
+Componente React reutilizável extraído do [Apogeo Nobre](https://github.com/marketingwebsam/apogeonobre). Ele funciona como uma camada de controle para o Google Translate Website Translator: o usuário escolhe um idioma, o componente grava o cookie `googtrans` no formato origem/destino (por exemplo, `/pt/en`) e dispara `change` no select nativo `.goog-te-combo` criado pelo Google.
 
 > **Contrato anti-filtro:** este componente não conhece posts, categorias, rotas, query strings, slugs, `react-router`, `URLSearchParams` ou qualquer estado de conteúdo. O código de idioma é encaminhado exclusivamente ao Google Translate; a página permanece na mesma URL e a lista de conteúdo não é filtrada.
 
