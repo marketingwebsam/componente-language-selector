@@ -93,6 +93,16 @@ export function writeGoogleTranslateLanguage(language: string): void {
   }
 }
 
+export function clearGoogleTranslateLanguage(): void {
+  if (typeof document === 'undefined') return
+
+  try {
+    document.cookie = `${COOKIE_NAME}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+  } catch {
+    // SafeWidget: cookie restrictions must never break the page.
+  }
+}
+
 export function findGoogleTranslateCombo(targetId: string): HTMLSelectElement | null {
   const target = getTarget(targetId)
   return target?.querySelector<HTMLSelectElement>('.goog-te-combo') || null
