@@ -86,6 +86,31 @@ describe('Google Translate adapter', () => {
     expect(change).toHaveBeenCalledTimes(2)
   })
 
+  it('does not restrict the native catalog unless includedLanguages is explicit', async () => {
+    const TranslateElement = vi.fn((options: { pageLanguage: string; includedLanguages?: string; autoDisplay: boolean }, targetId: string) => {
+      document.getElementById(targetId)?.insertAdjacentHTML('beforeend', '<select class="goog-te-combo"><option value="pt">Português</option><option value="en">English</option></select>')
+      return options
+    }) as unknown as new (...args: unknown[]) => unknown
+
+    ;(window as Window & { google?: unknown }).google = {
+      translate: { TranslateElement },
+    }
+
+    document.body.innerHTML = '<div id="language-target"></div>'
+    expect(await ensureGoogleTranslate({ targetId: 'language-target' })).toBe(true)
+    expect(TranslateElement).toHaveBeenLastCalledWith({ pageLanguage: 'pt', autoDisplay: false }, 'language-target')
+
+    document.body.innerHTML = '<div id="language-target-explicit"></div>'
+    expect(await ensureGoogleTranslate({
+      targetId: 'language-target-explicit',
+      includedLanguages: 'en,es',
+    })).toBe(true)
+    expect(TranslateElement).toHaveBeenLastCalledWith(
+      { pageLanguage: 'pt', includedLanguages: 'en,es', autoDisplay: false },
+      'language-target-explicit',
+    )
+  })
+
   it('creates the plugin-compatible loader before waiting for Google', async () => {
     document.body.innerHTML = '<div id="language-target"></div>'
 

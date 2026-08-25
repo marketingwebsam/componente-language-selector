@@ -34,9 +34,12 @@ O pacote foi configurado para React `>=18` e é compilado com Vite como bibliote
 
 ## Google Translate automático
 
-Por padrão, `loadGoogleTranslate` é `true`. Nesse modo, o componente cria uma única tag do script do Google Translate, inicializa um alvo invisível próprio e reutiliza o script caso o host já tenha uma tag equivalente. O callback é definido antes de o script ser anexado e a tag é inserida sem `async`, como no plugin GTranslate 3.1.1, para preservar a ordem do bootstrap:
+Por padrão, `loadGoogleTranslate` é `true`. Nesse modo, o componente cria uma única tag do script do Google Translate, inicializa um alvo invisível próprio e reutiliza o script caso o host já tenha uma tag equivalente. O callback é definido antes de o script ser anexado e a tag é inserida sem `async`, como no plugin GTranslate 3.1.1, para preservar a ordem do bootstrap. O construtor não envia `includedLanguages` por padrão: o catálogo oficial completo do Google é carregado, e essa prop só deve ser usada quando o consumidor realmente quiser um subconjunto conhecido:
 
 ```tsx
+<LanguageSwitcher pageLanguage="pt" />
+
+{/* Restrição opcional, nunca relacionada ao conteúdo da aplicação. */}
 <LanguageSwitcher
   pageLanguage="pt"
   includedLanguages="en,es,it,pt,pt-PT,zh-CN,ja,fr"
@@ -61,7 +64,7 @@ O callback do host deve inicializar o Google Translate usando exatamente `apogeo
 | Prop | Padrão | Uso |
 |---|---|---|
 | `pageLanguage` | `pt` | Idioma original informado ao Google Translate. |
-| `includedLanguages` | `en,es,it,pt,pt-PT,zh-CN,ja,fr` | Códigos aceitos pelo Google Translate. |
+| `includedLanguages` | vazio (catálogo completo) | Restrição opcional do catálogo Google; nunca filtra posts ou projetos. |
 | `loadGoogleTranslate` | `true` | Carrega o script do Google ou permite que o host o gerencie. |
 | `googleTranslateScriptUrl` | URL oficial | Permite uma URL de script controlada pelo host. |
 | `translateTargetId` | ID gerado pelo React | ID estável do alvo Google quando o host gerencia a inicialização. |
@@ -83,7 +86,7 @@ A versão estabilizada impõe quatro separações importantes:
 | A aplicação receber estado de posts | Não há props, imports ou callbacks de posts, categorias, slugs ou filtros de conteúdo. |
 | Um script auxiliar duplicar a interface | O carregamento do script é idempotente e o alvo Google fica invisível; o usuário interage somente com a UI customizada. |
 
-O smoke test procura regressões dessas categorias no código de produção e os testes unitários confirmam que um `.goog-te-combo` fora do alvo não é alterado.
+O smoke test procura regressões dessas categorias no código de produção e os testes unitários confirmam que um `.goog-te-combo` fora do alvo não é alterado. Há também uma regressão específica que garante que `includedLanguages` não seja enviado por padrão, pois o runtime atual do Google pode deixar o combo vazio quando recebe essa restrição.
 
 ## Acessibilidade e UX
 

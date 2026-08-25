@@ -9,7 +9,7 @@ export interface GoogleTranslateOptions {
 type TranslateElementConstructor = new (
   options: {
     pageLanguage: string
-    includedLanguages: string
+    includedLanguages?: string
     autoDisplay: boolean
   },
   targetId: string,
@@ -29,7 +29,9 @@ interface GoogleTranslateWindow extends Window {
 
 const DEFAULT_SCRIPT_URL = 'https://translate.google.com/translate_a/element.js'
 const DEFAULT_PAGE_LANGUAGE = 'pt'
-const DEFAULT_INCLUDED_LANGUAGES = 'en,es,it,pt,pt-PT,zh-CN,ja,fr'
+// Empty by default: Google must load its complete native catalog. Consumers may
+// still pass `includedLanguages` explicitly when they knowingly need a subset.
+const DEFAULT_INCLUDED_LANGUAGES = ''
 const CALLBACK_NAME = 'componentLanguageSwitcherGoogleTranslateInit'
 const SCRIPT_ATTRIBUTE = 'data-component-language-switcher-google-translate'
 const INITIALIZATION_ATTRIBUTE = 'data-component-language-switcher-google-translate-initialization'
@@ -110,7 +112,11 @@ export function applyGoogleTranslateLanguage(language: string, targetId: string)
   }
 }
 
-function initializeGoogleTranslate(options: Required<Pick<GoogleTranslateOptions, 'targetId' | 'pageLanguage' | 'includedLanguages'>>): boolean {
+function initializeGoogleTranslate(options: {
+  targetId: string
+  pageLanguage: string
+  includedLanguages?: string
+}): boolean {
   const constructor = getTranslateConstructor()
   const target = getTarget(options.targetId)
   if (!constructor || !target) return false
@@ -121,14 +127,17 @@ function initializeGoogleTranslate(options: Required<Pick<GoogleTranslateOptions
 
   target.setAttribute(INITIALIZATION_ATTRIBUTE, 'pending')
   try {
-    new constructor(
-      {
-        pageLanguage: options.pageLanguage,
-        includedLanguages: options.includedLanguages,
-        autoDisplay: false,
-      },
-      options.targetId,
-    )
+    const translateOptions: {
+      pageLanguage: string
+      includedLanguages?: string
+      autoDisplay: boolean
+    } = {
+      pageLanguage: options.pageLanguage,
+      autoDisplay: false,
+    }
+    if (options.includedLanguages) translateOptions.includedLanguages = options.includedLanguages
+
+    new constructor(translateOptions, options.targetId)
     const initializedCombo = target.querySelector<HTMLSelectElement>('.goog-te-combo')
     return Boolean(initializedCombo && initializedCombo.options.length > 0)
   } catch {
