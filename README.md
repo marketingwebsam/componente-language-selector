@@ -34,7 +34,7 @@ O pacote foi configurado para React `>=18` e é compilado com Vite como bibliote
 
 ## Google Translate automático
 
-Por padrão, `loadGoogleTranslate` é `true`. Nesse modo, o componente cria uma única tag do script do Google Translate, inicializa um alvo invisível próprio e reutiliza o script caso o host já tenha uma tag equivalente:
+Por padrão, `loadGoogleTranslate` é `true`. Nesse modo, o componente cria uma única tag do script do Google Translate, inicializa um alvo invisível próprio e reutiliza o script caso o host já tenha uma tag equivalente. O callback é definido antes de o script ser anexado, como no plugin GTranslate 3.1.1, para que o runtime possa chamar a inicialização sem depender de uma corrida de carregamento:
 
 ```tsx
 <LanguageSwitcher
@@ -43,7 +43,7 @@ Por padrão, `loadGoogleTranslate` é `true`. Nesse modo, o componente cria uma 
 />
 ```
 
-A inicialização é feita com `autoDisplay: false`, portanto a UI visível é somente o seletor customizado. O componente não usa o elemento global `#google_translate_element` do host: cada instância possui um alvo isolado e um ID próprio.
+A inicialização é feita com `autoDisplay: false`, portanto a UI visível é somente o seletor customizado. O componente não usa o elemento global `#google_translate_element` do host: cada instância possui um alvo isolado e um ID próprio. Depois de instanciar `TranslateElement`, o adaptador espera até que o Google crie um `.goog-te-combo` populado. Só então aplica o idioma, atribui o valor ao select nativo e dispara dois eventos `change`, sequência usada pelo plugin para compatibilidade com o Website Translator em diferentes navegadores e versões.
 
 Se o site já inicializa o Google Translate no `index.html`, o host pode manter essa responsabilidade e fornecer um alvo estável:
 
@@ -54,7 +54,7 @@ Se o site já inicializa o Google Translate no `index.html`, o host pode manter 
 />
 ```
 
-O callback do host deve inicializar o Google Translate usando exatamente `apogeo-google-translate`. Nesse modo, o site deve disponibilizar um `.goog-te-combo` dentro desse alvo. O componente não faz reload da página quando o select ainda não está disponível; ele grava a preferência sem alterar a rota e tenta aplicar a seleção novamente quando o carregamento automático está habilitado.
+O callback do host deve inicializar o Google Translate usando exatamente `apogeo-google-translate`. Nesse modo, o site deve disponibilizar um `.goog-te-combo` dentro desse alvo. A seleção aguarda o combo ficar disponível e populado; não há reload da página, alteração de rota ou consulta a posts. Para reproduzir o contrato do plugin, o adaptador mantém uma referência global ao script (`gt_translate_script`) e nunca insere uma segunda tag equivalente.
 
 ## API
 
@@ -101,7 +101,7 @@ npm run build
 bash tests/smoke.sh
 ```
 
-O pacote foi validado com lint ESLint, quatro testes unitários do adaptador, typecheck/declaration build e build Vite. O smoke test também bloqueia referências de produção a navegação por locale, filtros de posts e query strings.
+O pacote foi validado com lint ESLint, cinco testes unitários do adaptador, dois testes de interação do componente, typecheck/declaration build e build Vite. O smoke test também bloqueia referências de produção a navegação por locale, filtros de posts e query strings, além de verificar a espera pelo combo e a sequência dupla de `change`.
 
 ## Integração no Apogeo
 
