@@ -32,6 +32,32 @@ describe('LanguageSwitcher', () => {
     expect(markup).not.toMatch(/post|filter|navigate|URLSearchParams/i)
   })
 
+  it('does not show an unapplied language when the Google combo is absent', () => {
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+
+    act(() => {
+      root?.render(
+        <LanguageSwitcher
+          loadGoogleTranslate={false}
+          translateTargetId="missing-google-target"
+        />,
+      )
+    })
+
+    const trigger = container.querySelector<HTMLButtonElement>('.ls-trigger')
+    act(() => trigger?.click())
+    const option = Array.from(container.querySelectorAll<HTMLButtonElement>('.ls-option'))
+      .find((button) => button.textContent?.includes('English'))
+    expect(option).not.toBeUndefined()
+
+    act(() => option?.click())
+
+    expect(trigger?.textContent).toContain('Português BR')
+    expect(document.cookie).not.toContain('googtrans=%2Fauto%2Fen')
+  })
+
   it('changes only the Google combo when a user selects a language', () => {
     container = document.createElement('div')
     document.body.appendChild(container)
