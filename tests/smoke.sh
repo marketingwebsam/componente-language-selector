@@ -20,6 +20,9 @@ fi
 grep -q 'googtrans' src/googleTranslate.ts
 grep -q 'goog-te-combo' src/googleTranslate.ts
 grep -q 'componentLanguageSwitcherGoogleTranslateInit' src/googleTranslate.ts
+grep -q 'gt_translate_script' src/googleTranslate.ts
+grep -q 'options.length' src/googleTranslate.ts
+test "$(grep -c 'dispatchEvent(new Event' src/googleTranslate.ts)" -ge 2
 grep -q 'aria-haspopup="listbox"' src/LanguageSwitcher.tsx
 grep -q 'role="listbox"' src/LanguageSwitcher.tsx
 

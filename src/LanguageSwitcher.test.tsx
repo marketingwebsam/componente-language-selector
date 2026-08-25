@@ -66,7 +66,7 @@ describe('LanguageSwitcher', () => {
     act(() => option?.click())
 
     expect(combo?.value).toBe('en')
-    expect(change).toHaveBeenCalledTimes(1)
+    expect(change).toHaveBeenCalledTimes(2)
     expect(window.location.pathname).toBe('/')
     expect(window.location.search).toBe('')
     expect(document.cookie).toContain('googtrans=%2Fauto%2Fen')
