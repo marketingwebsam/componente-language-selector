@@ -154,7 +154,9 @@ function getOrCreateScript(scriptUrl: string): HTMLScriptElement | null {
 
   try {
     const script = document.createElement('script')
-    script.async = true
+    // GTranslate 3.1.1 appends this script without async. Keep the same
+    // ordered bootstrap so the callback is installed before script execution.
+    script.async = false
     script.src = `${scriptUrl}${scriptUrl.includes('?') ? '&' : '?'}cb=${CALLBACK_NAME}`
     script.setAttribute(SCRIPT_ATTRIBUTE, 'true')
     ;(document.body || document.head).appendChild(script)
