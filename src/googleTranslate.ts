@@ -210,6 +210,10 @@ export function ensureGoogleTranslate(options: GoogleTranslateOptions): Promise<
         resolve(false)
         return
       }
+      // A host script may finish loading after the first call. Re-enter the
+      // initializer on every poll; the pending guard prevents duplicate
+      // constructors while still allowing a late Google API to bootstrap.
+      initializeGoogleTranslate(normalized)
       window.setTimeout(poll, 50)
     }
     poll()
