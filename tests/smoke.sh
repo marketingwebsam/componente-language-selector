@@ -25,5 +25,8 @@ grep -q 'options.length' src/googleTranslate.ts
 test "$(grep -c 'dispatchEvent(new Event' src/googleTranslate.ts)" -ge 2
 grep -q 'aria-haspopup="listbox"' src/LanguageSwitcher.tsx
 grep -q 'role="listbox"' src/LanguageSwitcher.tsx
+grep -q 'ls-permission-notice' src/LanguageSwitcher.tsx
+grep -q 'support.brave.com' src/LanguageSwitcher.tsx
+grep -q 'role="alert"' src/LanguageSwitcher.tsx
 
 echo 'Smoke test do Language Switcher passou.'

@@ -77,6 +77,7 @@ export default function LanguageSwitcher({
 }: LanguageSwitcherProps) {
   const [open, setOpen] = useState(false)
   const [currentCode, setCurrentCode] = useState(() => readGoogleTranslateLanguage(defaultLanguage))
+  const [permissionNotice, setPermissionNotice] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([])
   const listId = useId().replace(/:/g, '')
@@ -116,11 +117,13 @@ export default function LanguageSwitcher({
   const select = useCallback((language: LanguageOption) => {
     const previousCode = currentCode
     setOpen(false)
+    setPermissionNotice(false)
 
     const rollback = () => {
       if (previousCode === defaultLanguage) clearGoogleTranslateLanguage()
       else writeGoogleTranslateLanguage(previousCode)
       setCurrentCode(previousCode)
+      setPermissionNotice(true)
     }
 
     const applySelection = () => {
@@ -128,6 +131,7 @@ export default function LanguageSwitcher({
       if (applied) {
         writeGoogleTranslateLanguage(language.code)
         setCurrentCode(language.code)
+        setPermissionNotice(false)
         onLanguageChange?.(language.code)
       }
       return applied
@@ -238,6 +242,33 @@ export default function LanguageSwitcher({
       )}
 
       <div id={targetId} className="ls-google-translate-target" aria-hidden="true" />
+
+      {permissionNotice && (
+        <aside className="ls-permission-notice" role="alert" aria-live="assertive">
+          <div className="ls-permission-notice__content">
+            <strong className="ls-permission-notice__title">Google Tradutor bloqueado</strong>
+            <p className="ls-permission-notice__message">
+              No Brave, clique no ícone do leão (Shields) ao lado da barra de endereço e permita este site. Se necessário, permita JavaScript e cookies ou desative o Shields somente para este site; depois, recarregue a página.
+            </p>
+            <a
+              className="ls-permission-notice__help"
+              href="https://support.brave.com/hc/en-us/articles/360023646212-How-do-I-configure-global-and-site-specific-Shields-settings"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Como ajustar o Shields no Brave
+            </a>
+          </div>
+          <button
+            type="button"
+            className="ls-permission-notice__close"
+            aria-label="Fechar aviso do Google Tradutor"
+            onClick={() => setPermissionNotice(false)}
+          >
+            ×
+          </button>
+        </aside>
+      )}
     </div>
   )
 }

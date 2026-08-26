@@ -92,6 +92,8 @@ O smoke test procura regressões dessas categorias no código de produção e os
 
 O trigger usa `aria-haspopup="listbox"`, `aria-expanded` e `aria-controls`. As opções usam `role="option"` e `aria-selected`; o menu responde a `Enter`, espaço, setas, `Home`, `End` e `Escape`. As flags são decorativas porque o nome do idioma permanece textual. O foco visível e o modo `prefers-reduced-motion` são preservados, e o dropdown fecha quando o usuário clica fora.
 
+Quando o Google não consegue preencher o combo e a tentativa termina em falha, o componente mantém o idioma anterior e mostra um aviso `role="alert"` com instruções para usuários do Brave: abrir o ícone do leão, ajustar Shields para o site e, se necessário, permitir JavaScript e cookies antes de recarregar. O aviso inclui o [Brave Help Center](https://support.brave.com/hc/en-us/articles/360023646212-How-do-I-configure-global-and-site-specific-Shields-settings) e pode ser fechado sem alterar a URL ou o conteúdo.
+
 A direção visual foi mantida próxima ao Apogeo: fundo escuro translúcido, acento dourado, dropdown alinhado à direita, label antes da bandeira e adaptação para telas estreitas. As classes são específicas (`ls-*`) e os principais valores são tokens CSS para reduzir vazamento em sites consumidores.
 
 ## Desenvolvimento e validação

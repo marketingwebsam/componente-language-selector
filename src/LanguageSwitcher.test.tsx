@@ -55,7 +55,10 @@ describe('LanguageSwitcher', () => {
     act(() => option?.click())
 
     expect(trigger?.textContent).toContain('Português BR')
-    expect(document.cookie).not.toContain('googtrans=%2Fauto%2Fen')
+    expect(document.cookie).not.toContain('googtrans=%2Fpt%2Fen')
+    expect(container.querySelector('[role="alert"]')).not.toBeNull()
+    expect(container.textContent).toContain('Brave')
+    expect(container.querySelector<HTMLAnchorElement>('a[href*="support.brave.com"]')).not.toBeNull()
   })
 
   it('changes only the Google combo when a user selects a language', () => {
@@ -95,7 +98,7 @@ describe('LanguageSwitcher', () => {
     expect(change).toHaveBeenCalledTimes(2)
     expect(window.location.pathname).toBe('/')
     expect(window.location.search).toBe('')
-    expect(document.cookie).toContain('googtrans=%2Fauto%2Fen')
+    expect(document.cookie).toContain('googtrans=%2Fpt%2Fen')
   })
 })
 
